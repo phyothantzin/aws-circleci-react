@@ -18,7 +18,7 @@ aliases:
   - &install-dependencies
     run:
       name: Install Dependencies
-      command: npm install
+      command: npm install --legacy-peer-deps
   - &save-cache
     save_cache:
       paths:
@@ -35,7 +35,7 @@ aliases:
     run:
       name: Build Project
       command: |
-        npm install
+        npm install --legacy-peer-deps
         npm run build
         cd dist
         zip ../dist.zip -r * .[^.]*
