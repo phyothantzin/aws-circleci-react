@@ -62,7 +62,7 @@ workflows:
   build-and-deply:
     jobs:
       - build
-      - deply-to-aws-s3:
+      - deploy-to-aws-s3:
           requires:
             - build
           filters:
