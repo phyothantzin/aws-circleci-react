@@ -1,49 +1,73 @@
 version: 2.1
+executors:
+  app-executor:
+    docker:
+      - image: cimg/node:20.11.1
+    working_directory: ~/repo
+
+  aliases:
+    - &show-current-branch
+      run:
+        name: Show current branch
+        command: echo ${CIRCLE_BRANCH}
+    - &restore_cache
+      restore_cache:
+        keys:
+          - app-{{ checksum "package.json" }}
+          - app-
+    - &install_dependencies
+      run:
+        name: Install Dependencies
+        command: npm install
+    - &save_cache
+      save_cache:
+        paths:
+          - node_modules
+        key: app-{{ checksum "package.json" }}
+    - &install_aws_cli
+      run:
+        name: Install AWS CLI
+        working_directory: /
+        command: |
+          sudo apt-get -y -qq update
+          sudo apt-get install -y awscli
+    - &build_project
+      run:
+        name: Build Project
+        command: |
+          npm install
+          npm run build
+          cd dist
+          zip ../dist.zip -r * .[^.]*
+          echo "Build Successful"
 
 jobs:
   build:
-    docker:
-      - image: cimg/node:20.11.1
-    working_directory: ~/repo
+    executor: app-executor
     steps:
       - checkout
+      - *show-current-branch
+      - *restore_cache
+      - *install_dependencies
+      - *save_cache
+
+  linting:
+    executor: app-executor
+    steps:
+      - checkout
+      - *show-current-branch
+      - *restore_cache
       - run:
-          name: Show current branch
-          command: echo ${CIRCLE_BRANCH}
-      - restore_cache:
-          keys:
-            - app-{{ checksum "package.json" }}
-            - app-
-      - run:
-          name: Install Dependencies
-          command: npm install
-      - save_cache:
-          paths:
-            - node_modules
-          key: app-{{ checksum "package.json" }}
+          name: Run Linting
+          command: npm run lint
+
   deploy-to-aws-s3:
-    docker:
-      - image: cimg/node:20.11.1
-    working_directory: ~/repo
+    executor: app-executor
     steps:
       - checkout
-      - run:
-          name: Show current branch
-          command: echo ${CIRCLE_BRANCH}
-      - run:
-          name: Install AWS CLI
-          working_directory: /
-          command: |
-            sudo apt-get -y -qq update
-            sudo apt-get install -y awscli
-      - run:
-          name: Build Project
-          command: |
-            npm install
-            npm run build
-            cd dist
-            zip ../dist.zip -r * .[^.]*
-            echo "Build Successful"
+      - *show-current-branch
+      - *install_aws_cli
+      - *build_project
       - run:
           name: Deply to AWS S3
           command: |
@@ -61,9 +85,18 @@ workflows:
   build-and-deply:
     jobs:
       - build
-      - deploy-to-aws-s3:
+      - linting
           requires:
             - build
+          filters:
+            branches:
+              only:
+                - dev
+                - staging
+                - main
+      - deploy-to-aws-s3:
+          requires:
+            - linting
           filters:
             branches:
               only:
