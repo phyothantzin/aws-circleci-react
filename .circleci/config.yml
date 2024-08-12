@@ -82,10 +82,10 @@ jobs:
             fi
 
 workflows:
-  build-and-deply:
+  build-and-deploy:
     jobs:
       - build
-      - linting
+      - linting:
           requires:
             - build
           filters:
