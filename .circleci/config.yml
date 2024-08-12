@@ -58,6 +58,16 @@ jobs:
       - *show-current-branch
       - *restore-cache
       - run:
+          name: Run Prettier Check
+          command: npm run prettier:check
+
+  prettier:
+    executor: app-executor
+    steps:
+      - checkout
+      - *show-current-branch
+      - *restore-cache
+      - run:
           name: Run Linting
           command: npm run lint
 
@@ -94,9 +104,18 @@ workflows:
                 - dev
                 - staging
                 - main
+      - prettier:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - dev
+                - staging
+                - main
       - deploy-to-aws-s3:
           requires:
-            - linting
+            - prettier
           filters:
             branches:
               only:
