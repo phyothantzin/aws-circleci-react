@@ -98,22 +98,14 @@ jobs:
       - run:
           name: Notify via Discord
           command: |
-            STATUS=${CIRCLE_JOB}
-            if [ "${CIRCLE_JOB}" == "success" ]; then
-              COLOR=3066993
-              STATUS="succeeded"
-            else
-              COLOR=15158332
-              STATUS="failed"
-            fi
             curl -X POST -H "Content-Type: application/json" \
             -d '{
                   "content": null,
                   "embeds": [
                     {
                       "title": "Deployment Notification",
-                      "description": "'"${CIRCLE_BRANCH}"' branch deployment to AWS S3 and CloudFront '"${STATUS}"'. 👍",
-                      "color": '"${COLOR}"',
+                      "description": "'"${CIRCLE_BRANCH}"' branch deployment to AWS S3 and CloudFront is complete. 👍",
+                      "color": 5814783,
                       "fields": [
                         {
                           "name": "Project",
